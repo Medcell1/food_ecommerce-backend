@@ -53,7 +53,7 @@ router.post('/', authenticate, async (req, res) => {
   });
   
 // Update menu item by ID
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticate, async (req, res) => {
   try {
     const menuItemId = req.params.id;
     const { name, price, description, image } = req.body;
@@ -77,7 +77,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete menu item by ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
   try {
     const menuItemId = req.params.id;
 

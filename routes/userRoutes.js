@@ -1,6 +1,8 @@
+const authenticate = require('../middleware/authMiddleware');
 const User = require('../models/user');
 const express = require('express');
 const router = express.Router();
+
 
 
 // Get all users
@@ -35,7 +37,7 @@ router.get('/:id', async (req, res) => {
 
 
 //delete user
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
   try {
     const userId = req.params.id;
 
