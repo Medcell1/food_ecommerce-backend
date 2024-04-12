@@ -8,8 +8,18 @@ const imageUploadHelper = require("../constants/imageUploadHelper");
 const upload = multer({storage: multer.memoryStorage()})
 // Get all menu items
 router.get('/', async (req, res) => {
+  const filter = {};
+    const search = req.query.search;
+
+    if (search) {
+      filter.$or = [
+        { editor: { $regex: search, $options: "i" } },
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
     try {
-      const menuItems = await Menu.find();
+      const menuItems = await Menu.find(filter);
       res.json(menuItems);
     } catch (error) {
       console.error(error);
@@ -43,7 +53,7 @@ router.post('/', authenticate, upload.single("file"), async (req, res) => {
       if(!req.file) {
         return res.status(400).json({ message: "Image file is required" });
       }
-      const imageUrl = imageUploadHelper(req.file);
+      const imageUrl = await imageUploadHelper(req.file);
       req.body.image = imageUrl;
       const { name, price, description, image, measure } = req.body;
   
@@ -67,7 +77,7 @@ router.put('/:id', upload.single("file"), authenticate, async (req, res) => {
     
     const menuItemId = req.params.id;
     if(req.file) {
-      const imageUrl = imageUploadHelper(req.file);
+      const imageUrl = await imageUploadHelper(req.file);
       req.body.image = imageUrl;
     }
     const { name, price, description, image, measure } = req.body;
@@ -124,5 +134,27 @@ router.get('/user/:userId', async (req, res) => {
       res.status(500).json({ message: 'Internal Server Error' });
     }
   });
+// Update availability of a menu item by ID
+router.patch('/:id/availability', authenticate, async (req, res) => {
+  try {
+    const menuItemId = req.params.id;
+    const { available } = req.body;
+
+    // Ensure the menu item exists
+    const menuItem = await Menu.findById(menuItemId);
+    if (!menuItem) {
+      return res.status(404).json({ message: 'Menu item not found' });
+    }
+
+    // Update the availability of the menu item
+    menuItem.available = available;
+    await menuItem.save();
+
+    res.json({ message: 'Menu item availability updated successfully', menuItem });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 module.exports = router;

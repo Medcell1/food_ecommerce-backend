@@ -11,9 +11,9 @@ const menuSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-    required: true,
+    required: false,
   },
-  meausure: {
+  measure: {
     type: String,
     required: true,
   },
