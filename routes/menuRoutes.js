@@ -2,11 +2,24 @@ const express = require('express');
 const Menu = require('../models/menu');
 const router = express.Router();
 const authenticate = require('../middleware/authMiddleware'); 
+const multer = require("multer");
+const imageUploadHelper = require("../constants/imageUploadHelper");
 
+const upload = multer({storage: multer.memoryStorage()})
 // Get all menu items
 router.get('/', async (req, res) => {
+  const filter = {};
+    const search = req.query.search;
+
+    if (search) {
+      filter.$or = [
+        { editor: { $regex: search, $options: "i" } },
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
     try {
-      const menuItems = await Menu.find();
+      const menuItems = await Menu.find(filter);
       res.json(menuItems);
     } catch (error) {
       console.error(error);
@@ -16,9 +29,10 @@ router.get('/', async (req, res) => {
 
 
 // Get menu item by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id',  async (req, res) => {
     try {
       const menuItemId = req.params.id;
+
       const menuItem = await Menu.findById(menuItemId);
   
       if (!menuItem) {
@@ -34,15 +48,20 @@ router.get('/:id', async (req, res) => {
 
   
 // Create a new menu item
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, upload.single("file"), async (req, res) => {
     try {
-      const { name, price, description, image } = req.body;
+      if(!req.file) {
+        return res.status(400).json({ message: "Image file is required" });
+      }
+      const imageUrl = await imageUploadHelper(req.file);
+      req.body.image = imageUrl;
+      const { name, price, description, image, measure } = req.body;
   
       // Get the createdBy (user ID) from the authenticated user
       const createdBy = req.user._id;
   
       // Create a new menu item with createdBy information
-      const newMenuItem = new Menu({ name, price, description, image, createdBy });
+      const newMenuItem = new Menu({ name, price, description, image, measure, createdBy });
       await newMenuItem.save();
   
       res.status(201).json({ message: 'Menu item created successfully', menuItem: newMenuItem });
@@ -53,15 +72,20 @@ router.post('/', authenticate, async (req, res) => {
   });
   
 // Update menu item by ID
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', upload.single("file"), authenticate, async (req, res) => {
   try {
+    
     const menuItemId = req.params.id;
-    const { name, price, description, image } = req.body;
+    if(req.file) {
+      const imageUrl = await imageUploadHelper(req.file);
+      req.body.image = imageUrl;
+    }
+    const { name, price, description, image, measure } = req.body;
 
     // Update menu item
     const updatedMenuItem = await Menu.findByIdAndUpdate(
       menuItemId,
-      { name, price, description, image },
+      { name, price, description, image, measure },
       { new: true }
     );
 
@@ -110,5 +134,27 @@ router.get('/user/:userId', async (req, res) => {
       res.status(500).json({ message: 'Internal Server Error' });
     }
   });
+// Update availability of a menu item by ID
+router.patch('/:id/availability', authenticate, async (req, res) => {
+  try {
+    const menuItemId = req.params.id;
+    const { available } = req.body;
+
+    // Ensure the menu item exists
+    const menuItem = await Menu.findById(menuItemId);
+    if (!menuItem) {
+      return res.status(404).json({ message: 'Menu item not found' });
+    }
+
+    // Update the availability of the menu item
+    menuItem.available = available;
+    await menuItem.save();
+
+    res.json({ message: 'Menu item availability updated successfully', menuItem });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 module.exports = router;
