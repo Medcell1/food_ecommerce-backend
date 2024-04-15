@@ -46,7 +46,32 @@ router.get('/:id',  async (req, res) => {
     }
   });
 
-  
+  // Get menu items created by a particular user
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const search = req.query.search;
+
+    // Construct the filter object
+    const filter = { createdBy: userId };
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        // Add other fields as needed
+      ];
+    }
+
+    // Find all menu items where the createdBy field matches the userId and apply filtering
+    const menuItems = await Menu.find(filter);
+
+    res.json(menuItems);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
 // Create a new menu item
 router.post('/', authenticate, upload.single("file"), async (req, res) => {
     try {
