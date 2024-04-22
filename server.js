@@ -20,6 +20,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const menuRoutes = require("./routes/menuRoutes");
 const adminRoutes = require("./routes/adminRoute");
+const workingHoursRoutes = require("./routes/workinghoursRoute")
 const cookieParser = require("cookie-parser");
 
 server.use(cookieParser());
@@ -28,6 +29,7 @@ server.use("/auth", authRoutes);
 server.use("/users", userRoutes);
 server.use("/menu", menuRoutes);
 server.use("/admin", adminRoutes);
+server.use("/working-hours", workingHoursRoutes);
 server.get("/", async (req, res) => {
   return res.status(200).json({ message: "Hello" });
 });

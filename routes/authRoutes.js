@@ -23,6 +23,17 @@ router.post("/signup", upload.single("file"), async (req, res) => {
       return res.status(400).json({ message: "Fields are required" });
     }
 
+    // Set default working hours for each day of the week
+    const defaultWorkingHours = [
+      { day: "Monday" },
+      { day: "Tuesday" },
+      { day: "Wednesday" },
+      { day: "Thursday" },
+      { day: "Friday" },
+      { day: "Saturday" },
+      { day: "Sunday" }
+    ];
+
     // Check if there's an existing User
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -37,6 +48,7 @@ router.post("/signup", upload.single("file"), async (req, res) => {
       name,
       phoneNumber,
       image,
+      workingHours: defaultWorkingHours, // Set default working hours
     });
     await user.save();
 
@@ -50,12 +62,14 @@ router.post("/signup", upload.single("file"), async (req, res) => {
 
     res
       .status(201)
-      .json({ message: "User created successfully", user: user, token: token});
+      .json({ message: "User created successfully", user: user, token: token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
+
 
 //logIn
 router.post("/login", async (req, res) => {
