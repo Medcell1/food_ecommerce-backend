@@ -11,6 +11,7 @@ const upload = multer({storage: multer.memoryStorage()});
 // Signup
 router.post("/signup", upload.single("file"), async (req, res) => {
   try {
+    
     // Check if an image file is included in the request
     if (!req.file) {
       return res.status(400).json({ message: "Image file is required" });
@@ -48,7 +49,7 @@ router.post("/signup", upload.single("file"), async (req, res) => {
       name,
       phoneNumber,
       image,
-      workingHours: defaultWorkingHours, // Set default working hours
+      workingHours: defaultWorkingHours,
     });
     await user.save();
 
@@ -56,7 +57,7 @@ router.post("/signup", upload.single("file"), async (req, res) => {
       { email: user.email, userId: user._id },
       process.env.JWT_SECRET,
       {
-        expiresIn: "5h",
+        expiresIn: "30d",
       }
     );
 
@@ -105,7 +106,7 @@ router.post("/login", async (req, res) => {
       { email: user.email, userId: user._id },
       process.env.JWT_SECRET,
       {
-        expiresIn: "1h",
+        expiresIn: "30d",
       }
     );
     res.status(200).json({
