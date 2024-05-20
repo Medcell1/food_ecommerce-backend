@@ -3,15 +3,14 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const imageUploadHelper = require("../constants/imageUploadHelper");
-
 const router = express.Router();
 require("dotenv").config();
 const multer = require("multer");
 const upload = multer({storage: multer.memoryStorage()});
+
 // Signup
 router.post("/signup", upload.single("file"), async (req, res) => {
   try {
-    
     // Check if an image file is included in the request
     if (!req.file) {
       return res.status(400).json({ message: "Image file is required" });
